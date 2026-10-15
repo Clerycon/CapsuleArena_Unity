@@ -20,9 +20,7 @@ public class NetworkManagerUI : MonoBehaviour
     {
         _statusText.text = "Status: Not Connected";
 
-        _serverButton.onClick.AddListener(OnServerButtonClicked);
-        _hostButton.onClick.AddListener(OnHostButtonClicked);
-        _clientButton.onClick.AddListener(OnClientButtonClicked);
+        
     }
 
     private void OnEnable()
@@ -41,38 +39,38 @@ public class NetworkManagerUI : MonoBehaviour
 
     
 
-    private void OnServerButtonClicked()
-    {
-        _statusText.text = "Status: Creating Server";
-        SetButtonsInteractable(false);
-        if (!NetworkManager.Singleton.StartServer())
-        {
-            _statusText.text = "Status: Server Creation Failed";
-            SetButtonsInteractable(true);
-        }
-    }
+    // private void OnServerButtonClicked()
+    // {
+    //     _statusText.text = "Status: Creating Server";
+    //     SetButtonsInteractable(false);
+    //     if (!NetworkManager.Singleton.StartServer())
+    //     {
+    //         _statusText.text = "Status: Server Creation Failed";
+    //         SetButtonsInteractable(true);
+    //     }
+    // }
 
-    private void OnHostButtonClicked()
-    {
-        _statusText.text = "Status: Creating Host";
-        SetButtonsInteractable(false);
-        if (!NetworkManager.Singleton.StartHost())
-        {
-            _statusText.text = "Status: Host Creation Failed";
-            SetButtonsInteractable(true);
-        }
-    }
+    // private void OnHostButtonClicked()
+    // {
+    //     _statusText.text = "Status: Creating Host";
+    //     SetButtonsInteractable(false);
+    //     if (!NetworkManager.Singleton.StartHost())
+    //     {
+    //         _statusText.text = "Status: Host Creation Failed";
+    //         SetButtonsInteractable(true);
+    //     }
+    // }
 
-    private void OnClientButtonClicked()
-    {
-        _statusText.text = "Status: Connecting Server/Host";
-        SetButtonsInteractable(false);
-        if(!NetworkManager.Singleton.StartClient())
-        {
-            _statusText.text = "Status: Connection To Server/Host Failed";
-            SetButtonsInteractable(true);
-        }
-    }
+    // private void OnClientButtonClicked()
+    // {
+    //     _statusText.text = "Status: Connecting Server/Host";
+    //     SetButtonsInteractable(false);
+    //     if(!NetworkManager.Singleton.StartClient())
+    //     {
+    //         _statusText.text = "Status: Connection To Server/Host Failed";
+    //         SetButtonsInteractable(true);
+    //     }
+    // }
 
     private void SetButtonsInteractable(bool isInteractable)
     {
@@ -85,6 +83,7 @@ public class NetworkManagerUI : MonoBehaviour
     {
         if(NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient)
         {
+            //State Connected//
             _statusText.text = "Status: Server";
             _blackBackgroundTransform.gameObject.SetActive(false);
         }
@@ -121,7 +120,7 @@ public class NetworkManagerUI : MonoBehaviour
             case ConnectionEvent.PeerConnected:
                 if (!networkManager.IsServer)
                 {
-                    _connectedClientIds.Add(connectionEventData.ClientId);
+                    
                 }
                 break;
                 
@@ -137,14 +136,14 @@ public class NetworkManagerUI : MonoBehaviour
                 else
                 {
                     Debug.Log($"Client Is Disconnected With Id: {connectionEventData.ClientId}");
-                    _connectedClientIds.Remove(connectionEventData.ClientId);
+                    
                 }
                 break;
 
             case ConnectionEvent.PeerDisconnected:
                 if (!networkManager.IsServer)
                 {
-                    _connectedClientIds.Remove(connectionEventData.ClientId);
+                    
                 }
                 break;
 
@@ -156,6 +155,7 @@ public class NetworkManagerUI : MonoBehaviour
     {
         if (!isHost)
         {
+            //State Offline//
             _statusText.text = "Status: Connection Was Lost";
             _blackBackgroundTransform.gameObject.SetActive(true);
             SetButtonsInteractable(true);
