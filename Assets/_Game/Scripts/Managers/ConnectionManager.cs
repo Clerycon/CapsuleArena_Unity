@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
 
 public class ConnectionManager : MonoBehaviour
 {   
@@ -305,6 +304,28 @@ public class ConnectionManager : MonoBehaviour
         if(!_isLoggingEnabled) { return; }
         Debug.LogWarning($"[ConnectionManager][{_connectionRole}]  {message}");
     }
+
+    public string GetConnectionEndReasonText() => ConnectionEndReason switch
+    {
+        ConnectionEndReason.None => "Not connected",
+        ConnectionEndReason.StartFailed => "Could not start the session",
+        ConnectionEndReason.CouldNotConnect => "Could not connect to the server/host",
+        ConnectionEndReason.ConnectionLost => "Connection lost",
+        ConnectionEndReason.ServerStopped => "Server stopped",
+        ConnectionEndReason.NetworkError => "Network error",
+        ConnectionEndReason.SessionEnded => "Session ended",
+        _ => "Unknown"
+
+    };
+
+    public string GetConnectionRoleText() => ConnectionRole switch
+    {
+        ConnectionRole.None => "Not connected",
+        ConnectionRole.Server => "Server",
+        ConnectionRole.Host => "Host",
+        ConnectionRole.Client => "Client",
+        _ => "Unknown"  
+    };
 
     private void OnDestroy()
     {
