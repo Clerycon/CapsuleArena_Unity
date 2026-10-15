@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class ConnectionManager : MonoBehaviour
 {   
@@ -29,6 +30,9 @@ public class ConnectionManager : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private NetworkManager _networkManager;
+
+    [Header("Settings")]
+    [SerializeField] private bool _isLoggingEnabled;
     private void Awake()
     {
         if(Instance != null && Instance != this)
@@ -56,7 +60,16 @@ public class ConnectionManager : MonoBehaviour
     private void SetConnectionState(ConnectionState newConnectionState)
     {
         if(_connectionState == newConnectionState) { return; }
+        ConnectionState oldConnectionState = _connectionState;
         _connectionState = newConnectionState;
+        LogConnectionManager($"State changed: {oldConnectionState} -> {newConnectionState} | Reason: {_connectionEndReason}");
+        if(_connectionState == ConnectionState.NotConnected 
+            && oldConnectionState != ConnectionState.NotConnected 
+            && _connectionEndReason == ConnectionEndReason.None)
+        {
+            LogWarningConnectionManager(
+                $"Session ended without a reason (previous state: {oldConnectionState}). An end reason should be set before the state changes.");
+        }
         OnConnectionStateChanged?.Invoke(_connectionState);
     }
 
@@ -74,10 +87,19 @@ public class ConnectionManager : MonoBehaviour
 
     public bool StartServerSession()
     {
-        if(_connectionState != ConnectionState.NotConnected) { return false; }
-        if(_networkManager.IsListening || _networkManager.ShutdownInProgress) { return false;}
+        if(_connectionState != ConnectionState.NotConnected) 
+        { 
+            LogWarningConnectionManager($"Server start rejected: a session is already active (state: {_connectionState}).");
+            return false; 
+        }
+        if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
+        {
+            LogWarningConnectionManager($"Server start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            return false;
+        }
         
         _connectionEndReason = ConnectionEndReason.None;
+        LogConnectionManager("Server start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isServerStarted = _networkManager.StartServer();
         if (!isServerStarted)
@@ -89,10 +111,19 @@ public class ConnectionManager : MonoBehaviour
     }
     public bool StartHostSession()
     {
-        if(_connectionState != ConnectionState.NotConnected) { return false; }
-        if(_networkManager.IsListening || _networkManager.ShutdownInProgress) { return false;}
+        if(_connectionState != ConnectionState.NotConnected) 
+        { 
+            LogWarningConnectionManager($"Host start rejected: a session is already active (state: {_connectionState}).");
+            return false; 
+        }
+        if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
+        {
+            LogWarningConnectionManager($"Host start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            return false;
+        }
 
         _connectionEndReason = ConnectionEndReason.None;
+        LogConnectionManager("Host start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isHostStarted = _networkManager.StartHost();
         if (!isHostStarted)
@@ -104,10 +135,19 @@ public class ConnectionManager : MonoBehaviour
     }
     public bool StartClientSession()
     {
-        if(_connectionState != ConnectionState.NotConnected) { return false; }
-        if(_networkManager.IsListening || _networkManager.ShutdownInProgress) { return false;}
+        if(_connectionState != ConnectionState.NotConnected) 
+        { 
+            LogWarningConnectionManager($"Client start rejected: a session is already active (state: {_connectionState}).");
+            return false; 
+        }
+        if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
+        {
+            LogWarningConnectionManager($"Client start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            return false;
+        }
 
         _connectionEndReason = ConnectionEndReason.None;
+        LogConnectionManager("Client start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isClientStarted = _networkManager.StartClient();
         if (!isClientStarted)
@@ -120,7 +160,11 @@ public class ConnectionManager : MonoBehaviour
 
     public void EndSession()
     {
-        if(_connectionState == ConnectionState.NotConnected) { return; }
+        if(_connectionState == ConnectionState.NotConnected)
+        {
+            LogConnectionManager("End session ignored: there is no active session.");
+            return;
+        }
 
         _connectedClientIds.Clear();
         SetConnectionRole(ConnectionRole.None);
@@ -148,6 +192,7 @@ public class ConnectionManager : MonoBehaviour
                     if (networkManager.IsServer)
                     {
                         // Host(me(Connected))
+                        
                         _connectedClientIds.Add(connectionEventData.ClientId);
                         SetConnectionRole(ConnectionRole.Host);
                         SetConnectionState(ConnectionState.Connected);
@@ -167,6 +212,7 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdAdded = _connectedClientIds.Add(connectionEventData.ClientId);
                     if (isClientIdAdded)
                     {
+                        LogConnectionManager($"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
                         OnClientConnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -179,6 +225,7 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdAdded = _connectedClientIds.Add(connectionEventData.ClientId);
                     if (isClientIdAdded)
                     {
+                        LogConnectionManager($"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
                         OnClientConnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -206,6 +253,7 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdRemoved = _connectedClientIds.Remove(connectionEventData.ClientId);
                     if (isClientIdRemoved)
                     {
+                        LogConnectionManager($"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
                         OnClientDisconnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -218,6 +266,7 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdRemoved = _connectedClientIds.Remove(connectionEventData.ClientId);
                     if (isClientIdRemoved)
                     {
+                        LogConnectionManager($"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
                         OnClientDisconnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -243,6 +292,18 @@ public class ConnectionManager : MonoBehaviour
         SetConnectionRole(ConnectionRole.None);
         SetConnectionEndReason(ConnectionEndReason.NetworkError);
         SetConnectionState(ConnectionState.NotConnected);
+    }
+
+    private void LogConnectionManager(string message)
+    {
+        if(!_isLoggingEnabled) { return; }
+        Debug.Log($"[ConnectionManager][{_connectionRole}]  {message}");
+    }
+
+    private void LogWarningConnectionManager(string message)
+    {
+        if(!_isLoggingEnabled) { return; }
+        Debug.LogWarning($"[ConnectionManager][{_connectionRole}]  {message}");
     }
 
     private void OnDestroy()

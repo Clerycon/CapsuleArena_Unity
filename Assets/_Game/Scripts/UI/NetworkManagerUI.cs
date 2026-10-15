@@ -19,8 +19,6 @@ public class NetworkManagerUI : MonoBehaviour
     private void Awake()
     {
         _statusText.text = "Status: Not Connected";
-
-        
     }
 
     private void OnEnable()
