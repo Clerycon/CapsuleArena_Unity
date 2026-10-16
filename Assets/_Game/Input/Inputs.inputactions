@@ -1,0 +1,36 @@
+{
+    "version": 1,
+    "name": "Inputs",
+    "maps": [
+        {
+            "name": "Developer",
+            "id": "f8da2d04-9455-4a3d-b6ee-0dfa1c3232b3",
+            "actions": [
+                {
+                    "name": "NetStatsToggle",
+                    "type": "Button",
+                    "id": "5343c74b-2ce7-4c84-aebd-e5c834608d43",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "9d08f44a-36f4-4d16-8659-114e7348358e",
+                    "path": "<Keyboard>/f3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "NetStatsToggle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
