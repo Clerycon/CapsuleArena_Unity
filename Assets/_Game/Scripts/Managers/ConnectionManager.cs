@@ -296,13 +296,13 @@ public class ConnectionManager : MonoBehaviour
     private void LogConnectionManager(string message)
     {
         if(!_isLoggingEnabled) { return; }
-        Debug.Log($"[ConnectionManager][{_connectionRole}]  {message}");
+        Debug.Log($"[{DateTime.Now.ToString("HH:mm:ss.fff")}][ConnectionManager][{_connectionRole}]  {message}");
     }
 
     private void LogWarningConnectionManager(string message)
     {
         if(!_isLoggingEnabled) { return; }
-        Debug.LogWarning($"[ConnectionManager][{_connectionRole}]  {message}");
+        Debug.LogWarning($"[{DateTime.Now.ToString("HH:mm:ss.fff")}][ConnectionManager][{_connectionRole}]  {message}");
     }
 
     public string GetConnectionEndReasonText() => ConnectionEndReason switch
