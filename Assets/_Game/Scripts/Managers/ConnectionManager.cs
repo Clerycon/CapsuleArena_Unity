@@ -19,6 +19,7 @@ public class ConnectionManager : MonoBehaviour
     public event Action<ulong> OnClientDisconnected;
 
     // Connected Client Ids
+    private ulong _localClientId;
     private readonly HashSet<ulong> _connectedClientIds = new HashSet<ulong>();
 
     // Get Properties
@@ -30,8 +31,6 @@ public class ConnectionManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkManager _networkManager;
 
-    [Header("Settings")]
-    [SerializeField] private bool _isLoggingEnabled;
     private void Awake()
     {
         if(Instance != null && Instance != this)
@@ -41,13 +40,14 @@ public class ConnectionManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        LogManager.ContextProvider = GetLogContext;
     }
 
     private void Start()
     {
         if (_networkManager == null)
         {
-            Debug.LogError("NetworkManager Is Not Found!");
+            LogManager.LogError(this, "NetworkManager Is Not Found.");
             return;
         }
 
@@ -61,12 +61,12 @@ public class ConnectionManager : MonoBehaviour
         if(_connectionState == newConnectionState) { return; }
         ConnectionState oldConnectionState = _connectionState;
         _connectionState = newConnectionState;
-        LogConnectionManager($"State changed: {oldConnectionState} -> {newConnectionState} | Reason: {_connectionEndReason}");
+        LogManager.Log(this, $"State changed: {oldConnectionState} -> {newConnectionState} | Reason: {_connectionEndReason}");
         if(_connectionState == ConnectionState.NotConnected 
             && oldConnectionState != ConnectionState.NotConnected 
             && _connectionEndReason == ConnectionEndReason.None)
         {
-            LogWarningConnectionManager(
+            LogManager.LogWarning(this, 
                 $"Session ended without a reason (previous state: {oldConnectionState}). An end reason should be set before the state changes.");
         }
         OnConnectionStateChanged?.Invoke(_connectionState);
@@ -88,17 +88,18 @@ public class ConnectionManager : MonoBehaviour
     {
         if(_connectionState != ConnectionState.NotConnected) 
         { 
-            LogWarningConnectionManager($"Server start rejected: a session is already active (state: {_connectionState}).");
+            LogManager.LogWarning(this, $"Server start rejected: a session is already active (state: {_connectionState}).");
             return false; 
         }
         if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
         {
-            LogWarningConnectionManager($"Server start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            LogManager.LogWarning(this, 
+                $"Server start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
             return false;
         }
         
         _connectionEndReason = ConnectionEndReason.None;
-        LogConnectionManager("Server start requested.");
+        LogManager.Log(this, "Server start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isServerStarted = _networkManager.StartServer();
         if (!isServerStarted)
@@ -112,17 +113,19 @@ public class ConnectionManager : MonoBehaviour
     {
         if(_connectionState != ConnectionState.NotConnected) 
         { 
-            LogWarningConnectionManager($"Host start rejected: a session is already active (state: {_connectionState}).");
+            LogManager.LogWarning(this, 
+                $"Host start rejected: a session is already active (state: {_connectionState}).");
             return false; 
         }
         if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
         {
-            LogWarningConnectionManager($"Host start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            LogManager.LogWarning(this, 
+                $"Host start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
             return false;
         }
 
         _connectionEndReason = ConnectionEndReason.None;
-        LogConnectionManager("Host start requested.");
+        LogManager.Log(this, "Host start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isHostStarted = _networkManager.StartHost();
         if (!isHostStarted)
@@ -136,17 +139,19 @@ public class ConnectionManager : MonoBehaviour
     {
         if(_connectionState != ConnectionState.NotConnected) 
         { 
-            LogWarningConnectionManager($"Client start rejected: a session is already active (state: {_connectionState}).");
+            LogManager.LogWarning(this, 
+                $"Client start rejected: a session is already active (state: {_connectionState}).");
             return false; 
         }
         if(_networkManager.IsListening || _networkManager.ShutdownInProgress)
         {
-            LogWarningConnectionManager($"Client start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
+            LogManager.LogWarning(this, 
+                $"Client start rejected: NetworkManager is still running or shutting down (IsListening: {_networkManager.IsListening}, ShutdownInProgress: {_networkManager.ShutdownInProgress}).");
             return false;
         }
 
         _connectionEndReason = ConnectionEndReason.None;
-        LogConnectionManager("Client start requested.");
+        LogManager.Log(this, "Client start requested.");
         SetConnectionState(ConnectionState.Connecting);
         bool isClientStarted = _networkManager.StartClient();
         if (!isClientStarted)
@@ -161,11 +166,12 @@ public class ConnectionManager : MonoBehaviour
     {
         if(_connectionState == ConnectionState.NotConnected)
         {
-            LogConnectionManager("End session ignored: there is no active session.");
+            LogManager.Log(this, "End session ignored: there is no active session.");
             return;
         }
 
         _connectedClientIds.Clear();
+        _localClientId = 0;
         SetConnectionRole(ConnectionRole.None);
         SetConnectionEndReason(ConnectionEndReason.SessionEnded);
         SetConnectionState(ConnectionState.NotConnected);
@@ -191,8 +197,8 @@ public class ConnectionManager : MonoBehaviour
                     if (networkManager.IsServer)
                     {
                         // Host(me(Connected))
-                        
                         _connectedClientIds.Add(connectionEventData.ClientId);
+                        _localClientId = connectionEventData.ClientId;
                         SetConnectionRole(ConnectionRole.Host);
                         SetConnectionState(ConnectionState.Connected);
                     }
@@ -201,6 +207,7 @@ public class ConnectionManager : MonoBehaviour
                         // Client(me(Connected))
                         _connectedClientIds.UnionWith(connectionEventData.PeerClientIds);
                         _connectedClientIds.Add(connectionEventData.ClientId);
+                        _localClientId = connectionEventData.ClientId;
                         SetConnectionRole(ConnectionRole.Client);
                         SetConnectionState(ConnectionState.Connected);
                     }
@@ -211,7 +218,8 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdAdded = _connectedClientIds.Add(connectionEventData.ClientId);
                     if (isClientIdAdded)
                     {
-                        LogConnectionManager($"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
+                        LogManager.Log(this, 
+                            $"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
                         OnClientConnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -224,7 +232,8 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdAdded = _connectedClientIds.Add(connectionEventData.ClientId);
                     if (isClientIdAdded)
                     {
-                        LogConnectionManager($"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
+                        LogManager.Log(this, 
+                            $"Client {connectionEventData.ClientId} connected. Connected clients: {_connectedClientIds.Count}");
                         OnClientConnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -235,6 +244,7 @@ public class ConnectionManager : MonoBehaviour
                 {
                     // Host Or Client(Me(Disconnected))
                     _connectedClientIds.Clear();
+                    _localClientId = 0;
                     SetConnectionRole(ConnectionRole.None);
                     if(_connectionState == ConnectionState.Connecting)
                     {
@@ -252,7 +262,8 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdRemoved = _connectedClientIds.Remove(connectionEventData.ClientId);
                     if (isClientIdRemoved)
                     {
-                        LogConnectionManager($"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
+                        LogManager.Log(this, 
+                            $"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
                         OnClientDisconnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -265,7 +276,8 @@ public class ConnectionManager : MonoBehaviour
                     bool isClientIdRemoved = _connectedClientIds.Remove(connectionEventData.ClientId);
                     if (isClientIdRemoved)
                     {
-                        LogConnectionManager($"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
+                        LogManager.Log(this, 
+                            $"Client {connectionEventData.ClientId} disconnected. Connected clients: {_connectedClientIds.Count}");
                         OnClientDisconnected?.Invoke(connectionEventData.ClientId);
                     }
                 }
@@ -278,6 +290,7 @@ public class ConnectionManager : MonoBehaviour
         if (!isHost)
         {
             _connectedClientIds.Clear();
+            _localClientId = 0;
             SetConnectionRole(ConnectionRole.None);
             SetConnectionEndReason(ConnectionEndReason.ServerStopped);
             SetConnectionState(ConnectionState.NotConnected);
@@ -288,21 +301,10 @@ public class ConnectionManager : MonoBehaviour
     {
         // Network Failiure
         _connectedClientIds.Clear();
+        _localClientId = 0;
         SetConnectionRole(ConnectionRole.None);
         SetConnectionEndReason(ConnectionEndReason.NetworkError);
         SetConnectionState(ConnectionState.NotConnected);
-    }
-
-    private void LogConnectionManager(string message)
-    {
-        if(!_isLoggingEnabled) { return; }
-        Debug.Log($"[{DateTime.Now.ToString("HH:mm:ss.fff")}][ConnectionManager][{_connectionRole}]  {message}");
-    }
-
-    private void LogWarningConnectionManager(string message)
-    {
-        if(!_isLoggingEnabled) { return; }
-        Debug.LogWarning($"[{DateTime.Now.ToString("HH:mm:ss.fff")}][ConnectionManager][{_connectionRole}]  {message}");
     }
 
     public string GetConnectionEndReasonText() => ConnectionEndReason switch
@@ -327,11 +329,21 @@ public class ConnectionManager : MonoBehaviour
         _ => "Unknown"  
     };
 
+    private string GetLogContext() => ConnectionRole switch 
+    {
+        ConnectionRole.None => "None",
+        ConnectionRole.Server => "Server",
+        ConnectionRole.Host => $"Host ({_localClientId})",
+        ConnectionRole.Client => $"Client ({_localClientId})",
+        _ => "Unknown" 
+    };
+
     private void OnDestroy()
     {
         if(Instance == this)
         {
             Instance = null;
+            LogManager.ContextProvider = null;
         }
 
         if (_networkManager == null)

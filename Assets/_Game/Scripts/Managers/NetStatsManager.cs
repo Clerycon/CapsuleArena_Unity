@@ -17,7 +17,7 @@ public class NetStatsManager : MonoBehaviour
     {
         if(InputManager.Instance == null)
         {
-            Debug.LogError("[NetStatsManager] InputManager instance not found.");
+            LogManager.LogError(this, "InputManager instance not found.");
             return;
         }
 

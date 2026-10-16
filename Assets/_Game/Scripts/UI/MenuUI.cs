@@ -23,7 +23,7 @@ public class MenuUI : MonoBehaviour
     {
         if(ConnectionManager.Instance == null)
         {
-            Debug.LogError("[MenuUI] ConnectionManager instance not found. Start the game from the Bootstrap scene.");
+            LogManager.LogError(this, "ConnectionManager instance not found. Start the game from the Bootstrap scene.");
             return;
         }
 
@@ -35,7 +35,7 @@ public class MenuUI : MonoBehaviour
     {
         if (ConnectionManager.Instance == null)
         {
-            Debug.LogError("[MenuUI] ConnectionManager instance not found. Start the game from the Bootstrap scene.");
+            LogManager.LogError(this, "ConnectionManager instance not found. Start the game from the Bootstrap scene.");
             return;
         }
         ConnectionManager.Instance.StartServerSession();
@@ -46,7 +46,7 @@ public class MenuUI : MonoBehaviour
     {
         if (ConnectionManager.Instance == null)
         {
-            Debug.LogError("[MenuUI] ConnectionManager instance not found. Start the game from the Bootstrap scene.");
+            LogManager.LogError(this, "ConnectionManager instance not found. Start the game from the Bootstrap scene.");
             return;
         }
         ConnectionManager.Instance.StartHostSession();
@@ -56,7 +56,7 @@ public class MenuUI : MonoBehaviour
     {
         if (ConnectionManager.Instance == null)
         {
-            Debug.LogError("[MenuUI] ConnectionManager instance not found. Start the game from the Bootstrap scene.");
+            LogManager.LogError(this, "ConnectionManager instance not found. Start the game from the Bootstrap scene.");
             return;
         }
         ConnectionManager.Instance.StartClientSession();
@@ -66,7 +66,7 @@ public class MenuUI : MonoBehaviour
     {
         if (ConnectionManager.Instance == null)
         {
-            Debug.LogError("[MenuUI] ConnectionManager instance not found. Start the game from the Bootstrap scene.");
+            LogManager.LogError(this, "ConnectionManager instance not found. Start the game from the Bootstrap scene.");
             return;
         }
         ConnectionManager.Instance.EndSession();

@@ -393,7 +393,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConnectionManager
   _networkManager: {fileID: 161545717}
-  _isLoggingEnabled: 1
 --- !u!1 &1932358445
 GameObject:
   m_ObjectHideFlags: 0
