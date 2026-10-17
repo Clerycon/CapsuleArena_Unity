@@ -31,10 +31,14 @@ public class ConnectionManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private NetworkManager _networkManager;
 
+    [Header("Debug")]
+    [SerializeField] private bool _isRawConnectionEventLoggingEnabled;
+
     private void Awake()
     {
         if(Instance != null && Instance != this)
         {
+            LogManager.LogError(this, "Another ConnectionManager already exists in the scene.");
             Destroy(gameObject);
             return;
         }
@@ -189,6 +193,14 @@ public class ConnectionManager : MonoBehaviour
 
     private void NetworkManager_OnConnectionEvent(NetworkManager networkManager, ConnectionEventData connectionEventData)
     {
+        if (_isRawConnectionEventLoggingEnabled)
+        {
+            string peerClientIdsText = connectionEventData.PeerClientIds.IsCreated ? string.Join(", ", connectionEventData.PeerClientIds) : "-";
+            LogManager.Log(this,
+                $"[Raw] {connectionEventData.EventType} | ClientId: {connectionEventData.ClientId} | " +
+                $"LocalClientId: {networkManager.LocalClientId} | PeerClientIds: [{peerClientIdsText}]");
+        }
+
         switch (connectionEventData.EventType)
         {
             case ConnectionEvent.ClientConnected:

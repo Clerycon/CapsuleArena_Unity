@@ -27,6 +27,12 @@ public class MenuUI : MonoBehaviour
             return;
         }
 
+        if(InputManager.Instance == null)
+        {
+            LogManager.LogError(this, "InputManager instance not found. Start the game from the Bootstrap scene.");
+            return;
+        }
+
         ConnectionManager.Instance.OnConnectionStateChanged += ConnectionManager_OnConnectionStateChanged;
         ConnectionManager_OnConnectionStateChanged(ConnectionManager.Instance.ConnectionState);
     }
@@ -81,6 +87,7 @@ public class MenuUI : MonoBehaviour
                 _endSessionButton.gameObject.SetActive(false);
                 SetButtonsInteractable(true);
                 _statusText.text = $"Status: {ConnectionManager.Instance.GetConnectionEndReasonText()}";
+                InputManager.Instance.SetContext(InputContext.UI);
                 break;
 
             case ConnectionState.Connecting:
@@ -88,6 +95,7 @@ public class MenuUI : MonoBehaviour
                 _endSessionButton.gameObject.SetActive(false);
                 SetButtonsInteractable(false);
                 _statusText.text = "Status: Connecting";
+                InputManager.Instance.SetContext(InputContext.None);
                 break;
 
             case ConnectionState.Connected:
@@ -95,6 +103,7 @@ public class MenuUI : MonoBehaviour
                 _endSessionButton.gameObject.SetActive(true);
                 SetButtonsInteractable(false);
                 _statusText.text = $"Status: {ConnectionManager.Instance.GetConnectionRoleText()}";
+                InputManager.Instance.SetContext(InputContext.Gameplay);
                 break;
         }
     }
