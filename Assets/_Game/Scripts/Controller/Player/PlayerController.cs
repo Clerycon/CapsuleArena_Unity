@@ -5,9 +5,13 @@ public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private Transform _playerCameraTarget;
     [SerializeField] private PlayerInputController _playerInputController;
+    [SerializeField] private PlayerCanvasController _playerCanvasController;
 
     public override void OnNetworkSpawn()
     {
+        string nameText = IsOwner ? $"Player {OwnerClientId} (You)" : $"Player {OwnerClientId}";
+        _playerCanvasController.SetPlayerName(nameText);
+
         if(!IsOwner) { return; }
 
         _playerInputController.enabled = true;
