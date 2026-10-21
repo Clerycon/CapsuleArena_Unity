@@ -393,6 +393,7 @@ GameObject:
   - component: {fileID: 3966751658858620588}
   - component: {fileID: 1381522727740768273}
   - component: {fileID: 9037717379038477054}
+  - component: {fileID: 5944956214799853477}
   - component: {fileID: 67043964592305359}
   - component: {fileID: -1425911263853136503}
   m_Layer: 0
@@ -464,6 +465,8 @@ MonoBehaviour:
   _playerInputController: {fileID: 1381522727740768273}
   _playerCanvasController: {fileID: 67043964592305359}
   _playerMovementController: {fileID: 9037717379038477054}
+  _playerBoundsController: {fileID: 5944956214799853477}
+  _networkTransform: {fileID: -1425911263853136503}
   _isMoveRpcLoggingEnabled: 1
 --- !u!114 &3966751658858620588
 MonoBehaviour:
@@ -478,7 +481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSpawnLogger
   ShowTopMostFoldoutHeaderGroup: 1
-  _isLoggingEnabled: 1
+  _isLoggingEnabled: 0
 --- !u!114 &1381522727740768273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -504,6 +507,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovementController
   _moveSpeed: 10
+--- !u!114 &5944956214799853477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6497483421897483277}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bfb28c116418f04990c8b7df7fd5d71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBoundsController
+  _maxAllowedDistanceFromCenter: 15
 --- !u!114 &67043964592305359
 MonoBehaviour:
   m_ObjectHideFlags: 0

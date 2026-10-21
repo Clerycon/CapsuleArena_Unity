@@ -7,7 +7,10 @@ public class ConnectionManager : MonoBehaviour
 {   
     // Singleton Pattern
     public static ConnectionManager Instance { get; private set; }
-    
+
+    // Spawn
+    public Func<ulong, Pose?> SpawnPoseProvider { get; set; }
+
     // Enums
     private ConnectionState _connectionState = ConnectionState.NotConnected;
     private ConnectionRole _connectionRole = ConnectionRole.None;
@@ -59,7 +62,9 @@ public class ConnectionManager : MonoBehaviour
         _networkManager.OnConnectionEvent += NetworkManager_OnConnectionEvent;
         _networkManager.OnServerStopped += NetworkManager_OnServerStopped;
         _networkManager.OnTransportFailure += NetworkManager_OnTransportFailure;
+        _networkManager.ConnectionApprovalCallback = NetworkManager_ConnectionApprovalCallback;
     }
+
     private void SetConnectionState(ConnectionState newConnectionState)
     {
         if(_connectionState == newConnectionState) { return; }
@@ -164,6 +169,26 @@ public class ConnectionManager : MonoBehaviour
             SetConnectionState(ConnectionState.NotConnected);
         }
         return isClientStarted;
+    }
+
+    private void NetworkManager_ConnectionApprovalCallback(NetworkManager.ConnectionApprovalRequest request, 
+        NetworkManager.ConnectionApprovalResponse response)
+    {
+        Pose? spawnPose = SpawnPoseProvider?.Invoke(request.ClientNetworkId);
+
+        if(spawnPose.HasValue)
+        {
+            response.Position = spawnPose.Value.position;
+            response.Rotation = spawnPose.Value.rotation;
+            LogManager.Log(this, $"Approval for client {request.ClientNetworkId}: spawn at {spawnPose.Value.position}");
+        }
+        else
+        {
+            LogManager.Log(this, $"Approval for client {request.ClientNetworkId}: no spawn pose, using prefab position.");
+        }
+        
+        response.Approved = true;
+        response.CreatePlayerObject = true;
     }
 
     public void EndSession()
@@ -367,5 +392,6 @@ public class ConnectionManager : MonoBehaviour
         _networkManager.OnConnectionEvent -= NetworkManager_OnConnectionEvent;
         _networkManager.OnServerStopped -= NetworkManager_OnServerStopped;
         _networkManager.OnTransportFailure -= NetworkManager_OnTransportFailure;
+        _networkManager.ConnectionApprovalCallback = null;
     }
 }

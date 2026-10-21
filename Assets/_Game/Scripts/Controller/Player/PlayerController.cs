@@ -1,4 +1,6 @@
+using System;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
@@ -8,6 +10,8 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private PlayerInputController _playerInputController;
     [SerializeField] private PlayerCanvasController _playerCanvasController;
     [SerializeField] private PlayerMovementController _playerMovementController;
+    [SerializeField] private PlayerBoundsController _playerBoundsController;
+    [SerializeField] private NetworkTransform _networkTransform;
 
     [Header("Debug")]
     [SerializeField] private bool _isMoveRpcLoggingEnabled;
@@ -15,6 +19,13 @@ public class PlayerController : NetworkBehaviour
     private Vector3 _lastSentMoveDirection;
     public override void OnNetworkSpawn()
     {
+        _playerBoundsController.enabled = IsServer;
+
+        if (IsServer)
+        {
+            _playerBoundsController.OnPlayerLeftArena += PlayerBoundsController_OnPlayerLeftArena;
+        }
+
         _playerMovementController.enabled = IsServer;
 
         string nameText = IsOwner ? $"<color=green>Player {OwnerClientId}</color>" : $"<color=red>Player {OwnerClientId}</color>";
@@ -84,12 +95,54 @@ public class PlayerController : NetworkBehaviour
         }
     } 
 
+    private void PlayerBoundsController_OnPlayerLeftArena()
+    {
+        Pose? spawnPose = SpawnManager.Instance?.GetRandomSpawnPose(OwnerClientId);
+
+        if (spawnPose.HasValue)
+        {
+            LogManager.Log(this, $"Player {OwnerClientId} left the arena at {transform.position}, respawning at {spawnPose.Value.position}.");
+            _networkTransform.Teleport(spawnPose.Value.position, spawnPose.Value.rotation, transform.localScale);
+            if (IsServer)
+            {
+                _playerMovementController.SetMoveDirection(Vector3.zero);
+                ResetLastSentMoveDirectionRpc();
+            }
+        }
+        else
+        {
+            LogManager.LogWarning(this, $"Player {OwnerClientId} left the arena but no spawn pose is available.");
+        }
+
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void ResetLastSentMoveDirectionRpc(RpcParams rpcParams = default)
+    {
+        if(rpcParams.Receive.SenderClientId != NetworkManager.ServerClientId)
+        {
+            LogManager.LogWarning(this, $"Rejected move reset from client {rpcParams.Receive.SenderClientId}, only the server may send it.");
+            return;
+        }
+
+        _lastSentMoveDirection = Vector3.zero;
+
+        if (_isMoveRpcLoggingEnabled)
+        {
+            LogManager.Log(this, "Last sent move direction reset after respawn.");
+        }
+    }
+
+
+
     public override void OnNetworkDespawn()
     {
         if (IsServer)
         {
             _playerMovementController.SetMoveDirection(Vector3.zero);
             _playerMovementController.enabled = false;
+            _playerBoundsController.OnPlayerLeftArena -= PlayerBoundsController_OnPlayerLeftArena;
+            _playerBoundsController.enabled = false;
         }
 
         if(!IsOwner) { return; }
