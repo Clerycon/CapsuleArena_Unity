@@ -207,6 +207,30 @@ public class ConnectionManager : MonoBehaviour
         _networkManager.Shutdown();
     }
 
+    public void KickClient(ulong clientId, string reason)
+    {
+        if (_connectionRole != ConnectionRole.Server && _connectionRole != ConnectionRole.Host)
+        {
+            LogManager.LogWarning(this, $"Cannot kick client {clientId}: only the server can kick clients (role: {_connectionRole}).");
+            return;
+        }
+
+        if (clientId == NetworkManager.ServerClientId)
+        {
+            LogManager.LogWarning(this, $"Cannot kick client {clientId}: the host cannot be kicked.");
+            return;
+        }
+
+        if (!_connectedClientIds.Contains(clientId))
+        {
+            LogManager.LogWarning(this, $"Cannot kick client {clientId}: client is not connected.");
+            return;
+        }
+
+        LogManager.LogWarning(this, $"Kicking client {clientId}: {reason}");
+        _networkManager.DisconnectClient(clientId, reason);
+    }
+
     private void NetworkManager_OnServerStarted()
     {
         if(_networkManager.IsServer && !_networkManager.IsClient)
@@ -291,7 +315,14 @@ public class ConnectionManager : MonoBehaviour
                     {
                         SetConnectionEndReason(ConnectionEndReason.ConnectionLost);
                     }
+
+                    if(!string.IsNullOrEmpty(_networkManager.DisconnectReason))
+                    {
+                        LogManager.LogWarning(this, $"Disconnected by server: {_networkManager.DisconnectReason}");
+                    }
+                    
                     SetConnectionState(ConnectionState.NotConnected);
+                    
                 }
                 else
                 {

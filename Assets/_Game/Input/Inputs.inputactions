@@ -15,6 +15,26 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "CheatTeleport",
+                    "type": "Button",
+                    "id": "bbfa8f86-2ad8-49e8-87a6-46213da2deb5",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "CheatSpeedBoost",
+                    "type": "Button",
+                    "id": "8ae0188c-09d3-4fb9-bc88-8ec19837ce2f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -26,6 +46,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "NetStatsToggle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "defdddda-f522-44b6-b726-b84388033291",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CheatTeleport",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "627c9ecb-9d91-43b9-bfe0-85e88a028aa9",
+                    "path": "<Keyboard>/y",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "CheatSpeedBoost",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

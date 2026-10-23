@@ -101,6 +101,26 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""CheatTeleport"",
+                    ""type"": ""Button"",
+                    ""id"": ""bbfa8f86-2ad8-49e8-87a6-46213da2deb5"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""CheatSpeedBoost"",
+                    ""type"": ""Button"",
+                    ""id"": ""8ae0188c-09d3-4fb9-bc88-8ec19837ce2f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -112,6 +132,28 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""NetStatsToggle"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""defdddda-f522-44b6-b726-b84388033291"",
+                    ""path"": ""<Keyboard>/t"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CheatTeleport"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""627c9ecb-9d91-43b9-bfe0-85e88a028aa9"",
+                    ""path"": ""<Keyboard>/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CheatSpeedBoost"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -225,6 +267,8 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
         // Developer
         m_Developer = asset.FindActionMap("Developer", throwIfNotFound: true);
         m_Developer_NetStatsToggle = m_Developer.FindAction("NetStatsToggle", throwIfNotFound: true);
+        m_Developer_CheatTeleport = m_Developer.FindAction("CheatTeleport", throwIfNotFound: true);
+        m_Developer_CheatSpeedBoost = m_Developer.FindAction("CheatSpeedBoost", throwIfNotFound: true);
         // Gameplay
         m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
         m_Gameplay_Move = m_Gameplay.FindAction("Move", throwIfNotFound: true);
@@ -314,6 +358,8 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_Developer;
     private List<IDeveloperActions> m_DeveloperActionsCallbackInterfaces = new List<IDeveloperActions>();
     private readonly InputAction m_Developer_NetStatsToggle;
+    private readonly InputAction m_Developer_CheatTeleport;
+    private readonly InputAction m_Developer_CheatSpeedBoost;
     /// <summary>
     /// Provides access to input actions defined in input action map "Developer".
     /// </summary>
@@ -329,6 +375,14 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Developer/NetStatsToggle".
         /// </summary>
         public InputAction @NetStatsToggle => m_Wrapper.m_Developer_NetStatsToggle;
+        /// <summary>
+        /// Provides access to the underlying input action "Developer/CheatTeleport".
+        /// </summary>
+        public InputAction @CheatTeleport => m_Wrapper.m_Developer_CheatTeleport;
+        /// <summary>
+        /// Provides access to the underlying input action "Developer/CheatSpeedBoost".
+        /// </summary>
+        public InputAction @CheatSpeedBoost => m_Wrapper.m_Developer_CheatSpeedBoost;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -358,6 +412,12 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
             @NetStatsToggle.started += instance.OnNetStatsToggle;
             @NetStatsToggle.performed += instance.OnNetStatsToggle;
             @NetStatsToggle.canceled += instance.OnNetStatsToggle;
+            @CheatTeleport.started += instance.OnCheatTeleport;
+            @CheatTeleport.performed += instance.OnCheatTeleport;
+            @CheatTeleport.canceled += instance.OnCheatTeleport;
+            @CheatSpeedBoost.started += instance.OnCheatSpeedBoost;
+            @CheatSpeedBoost.performed += instance.OnCheatSpeedBoost;
+            @CheatSpeedBoost.canceled += instance.OnCheatSpeedBoost;
         }
 
         /// <summary>
@@ -372,6 +432,12 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
             @NetStatsToggle.started -= instance.OnNetStatsToggle;
             @NetStatsToggle.performed -= instance.OnNetStatsToggle;
             @NetStatsToggle.canceled -= instance.OnNetStatsToggle;
+            @CheatTeleport.started -= instance.OnCheatTeleport;
+            @CheatTeleport.performed -= instance.OnCheatTeleport;
+            @CheatTeleport.canceled -= instance.OnCheatTeleport;
+            @CheatSpeedBoost.started -= instance.OnCheatSpeedBoost;
+            @CheatSpeedBoost.performed -= instance.OnCheatSpeedBoost;
+            @CheatSpeedBoost.canceled -= instance.OnCheatSpeedBoost;
         }
 
         /// <summary>
@@ -611,6 +677,20 @@ public partial class @Inputs: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnNetStatsToggle(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CheatTeleport" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCheatTeleport(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "CheatSpeedBoost" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCheatSpeedBoost(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Gameplay" which allows adding and removing callbacks.
