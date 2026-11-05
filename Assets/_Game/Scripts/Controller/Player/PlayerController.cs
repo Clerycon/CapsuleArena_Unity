@@ -10,12 +10,10 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private Transform _playerCameraTarget;
     [SerializeField] private PlayerInputController _playerInputController;
     [SerializeField] private PlayerCanvasController _playerCanvasController;
-    [SerializeField] private PlayerMovementController _playerMovementController;
     [SerializeField] private PlayerBoundsController _playerBoundsController;
     [SerializeField] private PlayerNetworkTransform _playerNetworkTransform;
     [SerializeField] private PlayerMovementValidator _playerMovementValidator;
     [SerializeField] private MovementAuthorityMode _movementAuthorityMode = MovementAuthorityMode.Server;
-
     [Header("Debug")]
     [SerializeField] private bool _isMoveRpcLoggingEnabled;
 
@@ -26,9 +24,25 @@ public class PlayerController : NetworkBehaviour
         (_resolvedMovementAuthorityMode == MovementAuthorityMode.Owner) || 
         (_resolvedMovementAuthorityMode == MovementAuthorityMode.OwnerValidated);
 
+    private IMovementMotor _movementMotor;
+
+    private MovementInput _currentMovementInput;
+    private bool _shouldSimulateMovement;
+
     private void Awake()
     {
         SetMovementAuthorityMode();
+        
+        _movementMotor = GetComponent<IMovementMotor>(); 
+
+        if(_movementMotor == null)
+        {
+            LogManager.LogError(this, "No IMovementMotor found on the player.");
+        }
+        else
+        {
+            LogManager.Log(this, $"Movement motor: {_movementMotor.GetType().Name}");
+        }
     }
     public override void OnNetworkSpawn()
     {
@@ -39,14 +53,8 @@ public class PlayerController : NetworkBehaviour
             _playerBoundsController.OnPlayerLeftArena += PlayerBoundsController_OnPlayerLeftArena;
         }
 
-        if (_isOwnerAuthorityMode)
-        {
-            _playerMovementController.enabled = IsOwner;
-        }
-        else
-        {
-            _playerMovementController.enabled = IsServer;
-        }
+        _shouldSimulateMovement = _isOwnerAuthorityMode ? IsOwner : IsServer;
+        _movementMotor.SetSimulationEnabled(_shouldSimulateMovement);
 
         if(IsServer && _resolvedMovementAuthorityMode == MovementAuthorityMode.OwnerValidated)
         {
@@ -93,6 +101,11 @@ public class PlayerController : NetworkBehaviour
     private void Update()
     {
         Move();
+
+        if (_shouldSimulateMovement)
+        {
+            _movementMotor.Simulate(_currentMovementInput, Time.deltaTime);
+        }
     }
 
     private void SetMovementAuthorityMode()
@@ -140,7 +153,7 @@ public class PlayerController : NetworkBehaviour
 
     private void ApplyMoveDirectionLocally(Vector3 moveDirection)
     {
-        _playerMovementController.SetMoveDirection(moveDirection);
+        _currentMovementInput = new MovementInput { MoveDirection = moveDirection};
     }
 
     private void SendMoveDirectionIfChanged(Vector3 moveDirection)
@@ -180,7 +193,7 @@ public class PlayerController : NetworkBehaviour
         }
         moveDirection.y = 0f;
 
-        _playerMovementController.SetMoveDirection(moveDirection);
+        _currentMovementInput = new MovementInput { MoveDirection = moveDirection};
 
         if (_isMoveRpcLoggingEnabled)
         {
@@ -204,7 +217,7 @@ public class PlayerController : NetworkBehaviour
             else
             {
                 _playerNetworkTransform.Teleport(spawnPose.Value.position, spawnPose.Value.rotation, transform.localScale);
-                _playerMovementController.SetMoveDirection(Vector3.zero);
+                _currentMovementInput = default;
                 ResetLastSentMoveDirectionRpc();
             }
         }
@@ -226,7 +239,7 @@ public class PlayerController : NetworkBehaviour
         }
         
         _playerNetworkTransform.Teleport(spawnPosition, spawnRotation, transform.localScale);
-        _playerMovementController.SetMoveDirection(Vector3.zero);
+        _currentMovementInput = default;
         LogManager.Log(this, $"Teleported by server to {spawnPosition}.");
     }
 
@@ -309,7 +322,7 @@ public class PlayerController : NetworkBehaviour
     private void InputManager_CheatSpeedBoost(InputAction.CallbackContext context)
     {
         _isCheatSpeedBoostActive = !_isCheatSpeedBoostActive;
-        _playerMovementController.SetSpeedMultiplier(_isCheatSpeedBoostActive ? 3f : 1f);
+        _movementMotor.SetSpeedMultiplier(_isCheatSpeedBoostActive ? 3f : 1f);
         LogManager.LogWarning(this, $"[Cheat] Speed boost {(_isCheatSpeedBoostActive ? "on" : "off")}.");
     }
 
@@ -329,22 +342,9 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        if (_isOwnerAuthorityMode)
-        {
-            if (IsOwner)
-            {
-                _playerMovementController.SetMoveDirection(Vector3.zero);
-                _playerMovementController.enabled = false;
-            }
-        }
-        else
-        {
-            if (IsServer)
-            {
-                _playerMovementController.SetMoveDirection(Vector3.zero);
-                _playerMovementController.enabled = false;
-            }
-        }
+        _shouldSimulateMovement = false;
+        _movementMotor.SetSimulationEnabled(false);
+        _currentMovementInput = default;
 
         if (IsServer)
         {
@@ -359,7 +359,7 @@ public class PlayerController : NetworkBehaviour
             _playerMovementValidator.OnViolationDetected -= PlayerMovementValidator_OnViolationDetected;
             _playerMovementValidator.enabled = false;
             _playerMovementValidator.OnCorrectionTimeout -= PlayerMovementValidator_OnCorrectionTimeOut;
-            _playerMovementValidator.OnViolationThresholdCrossed += PlayerMovementValidator_OnViolationThresholdCrossed;
+            _playerMovementValidator.OnViolationThresholdCrossed -= PlayerMovementValidator_OnViolationThresholdCrossed;
         }
 
         if(!IsOwner) { return; }
