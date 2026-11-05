@@ -468,6 +468,7 @@ MonoBehaviour:
   _playerBoundsController: {fileID: 5944956214799853477}
   _playerNetworkTransform: {fileID: 4037893545183654281}
   _playerMovementValidator: {fileID: -1225324780346372655}
+  _movementMotorBehaviour: {fileID: -6585357726133607022}
   _movementAuthorityMode: 3
   _isMoveRpcLoggingEnabled: 0
 --- !u!114 &3966751658858620588

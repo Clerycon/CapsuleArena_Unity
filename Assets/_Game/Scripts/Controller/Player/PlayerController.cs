@@ -13,6 +13,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private PlayerBoundsController _playerBoundsController;
     [SerializeField] private PlayerNetworkTransform _playerNetworkTransform;
     [SerializeField] private PlayerMovementValidator _playerMovementValidator;
+    [SerializeField] private MonoBehaviour _movementMotorBehaviour;
     [SerializeField] private MovementAuthorityMode _movementAuthorityMode = MovementAuthorityMode.Server;
     [Header("Debug")]
     [SerializeField] private bool _isMoveRpcLoggingEnabled;
@@ -33,11 +34,19 @@ public class PlayerController : NetworkBehaviour
     {
         SetMovementAuthorityMode();
         
-        _movementMotor = GetComponent<IMovementMotor>(); 
+        if(_movementMotorBehaviour == null)
+        {
+            LogManager.LogError(this, "Movement motor is not assigned.");
+            return;
+        }
+        else
+        {
+            _movementMotor = _movementMotorBehaviour as IMovementMotor;
+        }
 
         if(_movementMotor == null)
         {
-            LogManager.LogError(this, "No IMovementMotor found on the player.");
+            LogManager.LogError(this, $"{_movementMotorBehaviour.GetType().Name} does not implement IMovementMotor.");
         }
         else
         {
