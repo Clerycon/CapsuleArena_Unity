@@ -396,7 +396,9 @@ GameObject:
   - component: {fileID: -1225324780346372655}
   - component: {fileID: 67043964592305359}
   - component: {fileID: -6585357726133607022}
+  - component: {fileID: 6112323815667786540}
   - component: {fileID: 4037893545183654281}
+  - component: {fileID: 5566849056931218366}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -468,8 +470,8 @@ MonoBehaviour:
   _playerBoundsController: {fileID: 5944956214799853477}
   _playerNetworkTransform: {fileID: 4037893545183654281}
   _playerMovementValidator: {fileID: -1225324780346372655}
-  _movementMotorBehaviour: {fileID: -6585357726133607022}
-  _movementAuthorityMode: 3
+  _movementMotorBehaviour: {fileID: 6112323815667786540}
+  _movementAuthorityMode: 0
   _isMoveRpcLoggingEnabled: 0
 --- !u!114 &3966751658858620588
 MonoBehaviour:
@@ -551,6 +553,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TransformMovementController
   _movementDataSO: {fileID: 11400000, guid: 8c305f6e505e6d14a838d157faa91b06, type: 2}
+--- !u!114 &6112323815667786540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6497483421897483277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd890a99f08b25e47a3cd0cd5df8545c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterMovementController
+  _movementDataSO: {fileID: 11400000, guid: 8c305f6e505e6d14a838d157faa91b06, type: 2}
 --- !u!114 &4037893545183654281
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -597,3 +612,28 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!143 &5566849056931218366
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6497483421897483277}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.05
+  m_MinMoveDistance: 0
+  m_Center: {x: 0, y: 0, z: 0}

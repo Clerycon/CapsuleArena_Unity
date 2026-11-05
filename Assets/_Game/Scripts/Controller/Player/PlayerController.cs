@@ -39,11 +39,8 @@ public class PlayerController : NetworkBehaviour
             LogManager.LogError(this, "Movement motor is not assigned.");
             return;
         }
-        else
-        {
-            _movementMotor = _movementMotorBehaviour as IMovementMotor;
-        }
 
+        _movementMotor = _movementMotorBehaviour as IMovementMotor;
         if(_movementMotor == null)
         {
             LogManager.LogError(this, $"{_movementMotorBehaviour.GetType().Name} does not implement IMovementMotor.");
@@ -64,6 +61,7 @@ public class PlayerController : NetworkBehaviour
 
         _shouldSimulateMovement = _isOwnerAuthorityMode ? IsOwner : IsServer;
         _movementMotor.SetSimulationEnabled(_shouldSimulateMovement);
+        if (_shouldSimulateMovement) _movementMotor.SetState(_movementMotor.GetState());
 
         if(IsServer && _resolvedMovementAuthorityMode == MovementAuthorityMode.OwnerValidated)
         {
@@ -226,6 +224,7 @@ public class PlayerController : NetworkBehaviour
             else
             {
                 _playerNetworkTransform.Teleport(spawnPose.Value.position, spawnPose.Value.rotation, transform.localScale);
+                _movementMotor.SetState(new MovementState { Position = spawnPose.Value.position });
                 _currentMovementInput = default;
                 ResetLastSentMoveDirectionRpc();
             }
@@ -248,6 +247,7 @@ public class PlayerController : NetworkBehaviour
         }
         
         _playerNetworkTransform.Teleport(spawnPosition, spawnRotation, transform.localScale);
+        _movementMotor.SetState(new MovementState { Position = spawnPosition });
         _currentMovementInput = default;
         LogManager.Log(this, $"Teleported by server to {spawnPosition}.");
     }
@@ -345,6 +345,7 @@ public class PlayerController : NetworkBehaviour
 
         Vector3 targetPosition = transform.position + Vector3.forward * 10f;
         _playerNetworkTransform.Teleport(targetPosition, transform.rotation, transform.localScale);
+        _movementMotor.SetState(new MovementState { Position = targetPosition });
         LogManager.LogWarning(this, $"[Cheat] Teleported forward to {targetPosition}.");
     }
 
