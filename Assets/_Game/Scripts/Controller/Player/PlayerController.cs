@@ -15,6 +15,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private PlayerMovementValidator _playerMovementValidator;
     [SerializeField] private MonoBehaviour _movementMotorBehaviour;
     [SerializeField] private MovementAuthorityMode _movementAuthorityMode = MovementAuthorityMode.Server;
+    [SerializeField] private PlayerPredictionController _playerPredictionController;
     [Header("Debug")]
     [SerializeField] private bool _isMoveRpcLoggingEnabled;
 
@@ -28,7 +29,9 @@ public class PlayerController : NetworkBehaviour
     private IMovementMotor _movementMotor;
 
     private MovementInput _currentMovementInput;
-    private bool _shouldSimulateMovement;
+    private bool _isUpdateDrivingMotor;
+
+    private bool _isPredictedMode;
 
     private void Awake()
     {
@@ -59,9 +62,11 @@ public class PlayerController : NetworkBehaviour
             _playerBoundsController.OnPlayerLeftArena += PlayerBoundsController_OnPlayerLeftArena;
         }
 
-        _shouldSimulateMovement = _isOwnerAuthorityMode ? IsOwner : IsServer;
-        _movementMotor.SetSimulationEnabled(_shouldSimulateMovement);
-        if (_shouldSimulateMovement) _movementMotor.SetState(_movementMotor.GetState());
+        bool isMotorSimulating = _isPredictedMode ? (IsOwner || IsServer) : (_isOwnerAuthorityMode ? IsOwner : IsServer);
+        _isUpdateDrivingMotor = isMotorSimulating && !_isPredictedMode;
+        _movementMotor.SetSimulationEnabled(isMotorSimulating);
+        if (isMotorSimulating) _movementMotor.SetState(_movementMotor.GetState());
+        if(_isPredictedMode && isMotorSimulating) _playerPredictionController.StartPrediction(_movementMotor);
 
         if(IsServer && _resolvedMovementAuthorityMode == MovementAuthorityMode.OwnerValidated)
         {
@@ -109,7 +114,7 @@ public class PlayerController : NetworkBehaviour
     {
         Move();
 
-        if (_shouldSimulateMovement)
+        if (_isUpdateDrivingMotor)
         {
             _movementMotor.Simulate(_currentMovementInput, Time.deltaTime);
         }
@@ -117,25 +122,8 @@ public class PlayerController : NetworkBehaviour
 
     private void SetMovementAuthorityMode()
     {
-        switch (_movementAuthorityMode)
-        {
-            case MovementAuthorityMode.Server:
-                _resolvedMovementAuthorityMode = _movementAuthorityMode;
-                break;
-
-            case MovementAuthorityMode.ServerPredicted:
-                _resolvedMovementAuthorityMode = MovementAuthorityMode.Server;
-                LogManager.LogWarning(this, $"{_movementAuthorityMode} is not implemented yet, falling back to {_resolvedMovementAuthorityMode}.");
-                break;
-
-            case MovementAuthorityMode.Owner:
-                _resolvedMovementAuthorityMode = _movementAuthorityMode;
-                break;
-
-            case MovementAuthorityMode.OwnerValidated:
-                _resolvedMovementAuthorityMode = _movementAuthorityMode;
-                break;
-        }
+        _resolvedMovementAuthorityMode = _movementAuthorityMode;
+        _isPredictedMode = _resolvedMovementAuthorityMode == MovementAuthorityMode.ServerPredicted;
 
         _playerNetworkTransform.AuthorityMode = _isOwnerAuthorityMode ? NetworkTransform.AuthorityModes.Owner : NetworkTransform.AuthorityModes.Server;
         LogManager.Log(this, $"Movement authority: {_resolvedMovementAuthorityMode}, NetworkTransform authority: {_playerNetworkTransform.AuthorityMode}");
@@ -148,14 +136,22 @@ public class PlayerController : NetworkBehaviour
         Vector3 moveDirection = _playerInputController.MoveDirection;
         moveDirection.y = 0f;
 
-        if (_isOwnerAuthorityMode)
+        if (_isPredictedMode)
         {
-            ApplyMoveDirectionLocally(moveDirection);
+            _playerPredictionController.SetMoveDirection(moveDirection);
         }
         else
         {
-            SendMoveDirectionIfChanged(moveDirection);
+            if (_isOwnerAuthorityMode)
+            {
+                ApplyMoveDirectionLocally(moveDirection);
+            }
+            else
+            {
+                SendMoveDirectionIfChanged(moveDirection);
+            }
         }
+        
     }
 
     private void ApplyMoveDirectionLocally(Vector3 moveDirection)
@@ -352,9 +348,10 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        _shouldSimulateMovement = false;
+        _isUpdateDrivingMotor = false;
         _movementMotor.SetSimulationEnabled(false);
         _currentMovementInput = default;
+        _playerPredictionController.StopPrediction();
 
         if (IsServer)
         {

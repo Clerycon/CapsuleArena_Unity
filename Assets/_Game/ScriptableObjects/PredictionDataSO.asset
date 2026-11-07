@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PredictionDataSO
   m_EditorClassIdentifier: Assembly-CSharp::PredictionDataSO
   _inputBufferDurationSeconds: 1
-  _redundantInputCount: 3
+  _redundantInputCount: 5
   _maxServerQueueSize: 6
   _emptyQueueStrategy: 0
   _maxRepeatedInputTicks: 6
